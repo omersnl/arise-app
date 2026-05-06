@@ -2,26 +2,88 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 5%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 5%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 263 70% 50%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 5% 12%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 5% 12%;
+    --muted-foreground: 240 5% 55%;
+    --accent: 240 5% 12%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 40%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5% 16%;
+    --input: 240 5% 16%;
+    --ring: 263 70% 50%;
+    --radius: 0.5rem;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: #0a0a0f;
+    color: hsl(var(--foreground));
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  .system-window {
+    background: linear-gradient(
+      135deg,
+      rgba(12, 12, 26, 0.97) 0%,
+      rgba(18, 18, 42, 0.97) 100%
+    );
+    border: 1px solid rgba(124, 58, 237, 0.35);
+    box-shadow:
+      0 0 30px rgba(124, 58, 237, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  .system-text {
+    font-family: var(--font-geist-mono), monospace;
+    color: #a855f7;
+  }
+
+  .rank-badge {
+    font-family: var(--font-geist-mono), monospace;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+  }
+
+  .rank-E { color: #6b7280; }
+  .rank-D { color: #10b981; }
+  .rank-C { color: #3b82f6; }
+  .rank-B { color: #8b5cf6; }
+  .rank-A { color: #f59e0b; }
+  .rank-S { color: #ef4444; }
+  .rank-National { color: #ec4899; }
+  .rank-ShadowMonarch {
+    color: #a855f7;
+    text-shadow: 0 0 12px #7c3aed;
+  }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  .glow-purple {
+    box-shadow: 0 0 15px rgba(124, 58, 237, 0.5);
+  }
+
+  .glow-gold {
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.5);
   }
 }
