@@ -44,6 +44,7 @@ model User {
   guildMembership GuildMember?
   sentDuels       Duel[]       @relation("DuelChallenger")
   receivedDuels   Duel[]       @relation("DuelChallenged")
+  tasks           Task[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -275,6 +276,19 @@ model Duel {
   @@index([challengerId])
   @@index([challengedId])
   @@index([status])
+}
+
+model Task {
+  id        String   @id @default(cuid())
+  userId    String
+  date      String
+  title     String
+  completed Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
 }
 
 model GuildActivity {

@@ -54,7 +54,7 @@ export const QUEST_TEMPLATES = [
     difficulty: "D",
     step: 1,
     icon: "📋",
-    getTarget: () => 3,
+    getTarget: () => 0,
   },
 ] as const
 
