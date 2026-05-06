@@ -128,38 +128,15 @@ model DailyQuest {
   @@unique([userId, date, category])
 }
 
-model Shadow {
-  id          String @id @default(cuid())
-  name        String
-  type        String
-  description String
-  unlockReq   String
-  rarity      String
-  imageUrl    String?
-
-  userShadows UserShadow[]
-}
-
 model UserShadow {
   id         String   @id @default(cuid())
   userId     String
   shadowId   String
   unlockedAt DateTime @default(now())
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  shadow Shadow @relation(fields: [shadowId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, shadowId])
-}
-
-model Weapon {
-  id           String @id @default(cuid())
-  name         String
-  description  String
-  rankRequired String
-  imageUrl     String?
-
-  userWeapons UserWeapon[]
 }
 
 model UserWeapon {
@@ -168,19 +145,9 @@ model UserWeapon {
   weaponId   String
   unlockedAt DateTime @default(now())
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  weapon Weapon @relation(fields: [weaponId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, weaponId])
-}
-
-model Skill {
-  id          String @id @default(cuid())
-  name        String
-  description String
-  unlockReq   String
-
-  userSkills UserSkill[]
 }
 
 model UserSkill {
@@ -189,8 +156,7 @@ model UserSkill {
   skillId    String
   unlockedAt DateTime @default(now())
 
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  skill Skill @relation(fields: [skillId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, skillId])
 }
