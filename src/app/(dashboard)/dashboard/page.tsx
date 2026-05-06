@@ -1,27 +1,34 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
+import Link from "next/link"
 import { db } from "@/lib/db"
 import { getRankForXP, getXPProgress, RANKS } from "@/types"
+import { getOrCreateDailyQuests, todayString } from "@/lib/quests"
 
 export default async function DashboardPage() {
   const session = await auth()
   if (!session?.user?.id) redirect("/login")
 
-  const user = await db.user.findUnique({ where: { id: session.user.id } })
+  const [user, quests] = await Promise.all([
+    db.user.findUnique({ where: { id: session.user.id } }),
+    getOrCreateDailyQuests(session.user.id, todayString()),
+  ])
   if (!user) redirect("/login")
 
   const rank = getRankForXP(user.xp)
   const progress = getXPProgress(user.xp)
   const rankConfig = RANKS.find((r) => r.rank === rank)!
 
+  const completedQuests = quests.filter((q) => q.completed).length
+  const earnedXPToday = quests.filter((q) => q.completed).reduce((s, q) => s + q.xpReward, 0)
+  const totalXPToday = quests.reduce((s, q) => s + q.xpReward, 0)
+
   return (
-    <main className="min-h-screen bg-[#0a0a0f] p-6">
+    <main className="min-h-screen p-6">
       <div className="max-w-3xl mx-auto space-y-4">
-        {/* Header */}
+        {/* Hunter Status */}
         <div className="system-window rounded-lg p-6">
-          <p className="system-text text-xs tracking-widest uppercase mb-3">
-            Hunter Status
-          </p>
+          <p className="system-text text-xs tracking-widest uppercase mb-3">Hunter Status</p>
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-white font-mono">{user.name}</h1>
@@ -71,28 +78,62 @@ export default async function DashboardPage() {
             { label: "Daily Kcal", value: user.dailyCalories?.toLocaleString() ?? "—", color: "#10b981" },
           ].map((stat) => (
             <div key={stat.label} className="system-window rounded-lg p-4 text-center">
-              <p className="text-gray-500 font-mono text-xs uppercase tracking-wider">
-                {stat.label}
-              </p>
-              <p
-                className="text-2xl font-bold font-mono mt-1"
-                style={{ color: stat.color }}
-              >
+              <p className="text-gray-500 font-mono text-xs uppercase tracking-wider">{stat.label}</p>
+              <p className="text-2xl font-bold font-mono mt-1" style={{ color: stat.color }}>
                 {stat.value}
               </p>
             </div>
           ))}
         </div>
 
-        {/* Coming soon */}
-        <div className="system-window rounded-lg p-6 text-center">
-          <p className="text-purple-900/60 font-mono text-xs tracking-widest uppercase">
-            Dungeon quests loading...
-          </p>
-          <p className="text-gray-700 font-mono text-sm mt-2">
-            Daily missions will appear here once constructed.
-          </p>
-        </div>
+        {/* Daily Quest Summary */}
+        <Link href="/quests" className="block">
+          <div className="system-window rounded-lg p-5 hover:border-purple-600/50 transition-colors cursor-pointer">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className="system-text text-xs tracking-widest uppercase">Daily Dungeon</p>
+                <p className="text-white font-mono font-semibold text-sm mt-0.5">
+                  {completedQuests === quests.length
+                    ? "✦ All quests cleared!"
+                    : `${completedQuests} / ${quests.length} quests cleared`}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-amber-400 font-mono font-bold">
+                  {earnedXPToday}
+                  <span className="text-gray-600 font-normal text-xs"> / {totalXPToday} XP</span>
+                </p>
+                <p className="text-gray-600 font-mono text-xs mt-0.5">today</p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              {quests.map((q) => (
+                <div key={q.id} className="flex items-center gap-2">
+                  <span className="text-sm">
+                    {q.completed ? "✓" : "·"}
+                  </span>
+                  <div className="flex-1 h-1 rounded-full bg-purple-950/50 overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{
+                        width: `${Math.min(100, (q.current / q.target) * 100)}%`,
+                        backgroundColor: q.completed ? "#10b981" : "#7c3aed",
+                      }}
+                    />
+                  </div>
+                  <span className={`font-mono text-xs ${q.completed ? "text-green-500" : "text-gray-600"}`}>
+                    {q.category}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-purple-600 font-mono text-xs mt-3 text-right">
+              Enter dungeon →
+            </p>
+          </div>
+        </Link>
       </div>
     </main>
   )

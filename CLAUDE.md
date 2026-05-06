@@ -95,11 +95,16 @@ npx prisma studio     # browse database
 - [x] types/index.ts — Rank type, RANKS config, getRankForXP(), getXPProgress()
 - [x] Landing page (System Window splash)
 - [x] CLAUDE.md
-- [ ] Auth pages — /login, /register
-- [ ] Onboarding questionnaire (weight/height/age/goal → daily calorie target)
-- [ ] Dashboard layout with sidebar
-- [ ] Daily dungeon quests (calories, workout, water, sleep tracking)
-- [ ] XP bar + rank display
+- [x] Auth pages — /login, /register (metric/imperial toggle)
+- [x] Onboarding questionnaire (weight/height/age/goal → daily calorie target)
+- [x] Dashboard — hunter status, XP bar, rank, daily quest summary card
+- [x] Nav bar — links to all sections, sign out
+- [x] Daily dungeon quests (/quests) — 5 categories: calories, water, workout, sleep, tasks
+- [x] Quest progress tracking — +/- controls, exact kcal input, completion detection
+- [x] XP awarding on quest completion, rank-up detection + toast
+- [x] XP bar + rank display (color-coded per rank)
 - [ ] Shadow army page
 - [ ] Weapons page
 - [ ] Skills page
+- [ ] Streak tracking
+

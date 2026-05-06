@@ -33,12 +33,13 @@ model User {
   streakDays   Int       @default(0)
   lastActiveAt DateTime?
 
-  accounts   Account[]
-  sessions   Session[]
-  questLogs  QuestLog[]
-  shadows    UserShadow[]
-  weapons    UserWeapon[]
-  skills     UserSkill[]
+  accounts     Account[]
+  sessions     Session[]
+  questLogs    QuestLog[]
+  dailyQuests  DailyQuest[]
+  shadows      UserShadow[]
+  weapons      UserWeapon[]
+  skills       UserSkill[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -100,6 +101,26 @@ model QuestLog {
 
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   quest Quest @relation(fields: [questId], references: [id])
+}
+
+model DailyQuest {
+  id          String    @id @default(cuid())
+  userId      String
+  date        String    // YYYY-MM-DD
+  category    String    // calories | water | workout | sleep | tasks
+  title       String
+  description String
+  target      Float
+  current     Float     @default(0)
+  unit        String
+  xpReward    Int
+  difficulty  String
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date, category])
 }
 
 model Shadow {
