@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server"
+import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { getRankForXP } from "@/types"
+import { tryUpdateStreak } from "@/lib/streak"
+import { applyRaidDamage } from "@/lib/guild"
 
 const schema = z.object({ delta: z.number() })
 
@@ -57,11 +60,24 @@ export async function PATCH(
     })
   }
 
+  const userId = session.user.id
+  const [streakResult] = await Promise.all([
+    justCompleted ? tryUpdateStreak(userId) : Promise.resolve(null),
+    justCompleted ? applyRaidDamage(userId) : Promise.resolve(null),
+  ])
+
+  if (justCompleted) {
+    revalidatePath("/guild")
+  }
+
   return NextResponse.json({
     quest: updatedQuest,
     xpAwarded: justCompleted ? quest.xpReward : 0,
     totalXP: user?.xp ?? 0,
     rank: user?.rank ?? "E",
     rankedUp,
+    streakUpdated: streakResult?.streakUpdated ?? false,
+    streakDays: streakResult?.streakDays ?? 0,
+    streakMilestone: streakResult?.milestone ?? null,
   })
 }

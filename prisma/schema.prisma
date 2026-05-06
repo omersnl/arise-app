@@ -30,16 +30,20 @@ model User {
   rank          String @default("E")
 
   // Stats
-  streakDays   Int       @default(0)
-  lastActiveAt DateTime?
+  streakDays     Int     @default(0)
+  lastStreakDate String?  // YYYY-MM-DD of last day all quests were completed
+  lastActiveAt   DateTime?
 
-  accounts     Account[]
-  sessions     Session[]
-  questLogs    QuestLog[]
-  dailyQuests  DailyQuest[]
-  shadows      UserShadow[]
-  weapons      UserWeapon[]
-  skills       UserSkill[]
+  accounts        Account[]
+  sessions        Session[]
+  questLogs       QuestLog[]
+  dailyQuests     DailyQuest[]
+  shadows         UserShadow[]
+  weapons         UserWeapon[]
+  skills          UserSkill[]
+  guildMembership GuildMember?
+  sentDuels       Duel[]       @relation("DuelChallenger")
+  receivedDuels   Duel[]       @relation("DuelChallenged")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -188,4 +192,100 @@ model UserSkill {
   skill Skill @relation(fields: [skillId], references: [id])
 
   @@unique([userId, skillId])
+}
+
+model Guild {
+  id         String   @id @default(cuid())
+  name       String   @unique
+  inviteCode String   @unique @default(cuid())
+  leaderId   String
+  guildXP    Int      @default(0)
+  guildLevel Int      @default(1)
+
+  members    GuildMember[]
+  raidBosses RaidBoss[]
+  activities GuildActivity[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model GuildMember {
+  id        String   @id @default(cuid())
+  guildId   String
+  userId    String   @unique
+  role      String   @default("member")
+  weeklyXP  Int      @default(0)
+  weekStart String   @default("")
+  joinedAt  DateTime @default(now())
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([guildId])
+}
+
+model RaidBoss {
+  id        String @id @default(cuid())
+  guildId   String
+  bossKey   String
+  name      String
+  maxHP     Int
+  currentHP Int
+  weekStart String
+  weekEnd   String
+  defeated  Boolean @default(false)
+  xpReward  Int
+
+  damageLog RaidDamageLog[]
+  guild     Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@unique([guildId, weekStart])
+  @@index([guildId])
+}
+
+model RaidDamageLog {
+  id         String @id @default(cuid())
+  raidBossId String
+  userId     String
+  damage     Int
+  date       String
+
+  raidBoss RaidBoss @relation(fields: [raidBossId], references: [id], onDelete: Cascade)
+
+  @@unique([raidBossId, userId, date])
+  @@index([raidBossId])
+}
+
+model Duel {
+  id           String  @id @default(cuid())
+  challengerId String
+  challengedId String
+  xpWager      Int     @default(50)
+  startDate    String
+  endDate      String
+  status       String  @default("pending")
+  winnerId     String?
+
+  challenger User @relation("DuelChallenger", fields: [challengerId], references: [id], onDelete: Cascade)
+  challenged User @relation("DuelChallenged", fields: [challengedId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([challengerId])
+  @@index([challengedId])
+  @@index([status])
+}
+
+model GuildActivity {
+  id        String   @id @default(cuid())
+  guildId   String
+  userId    String
+  type      String
+  detail    String
+  createdAt DateTime @default(now())
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@index([guildId, createdAt])
 }

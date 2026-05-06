@@ -5,7 +5,7 @@ export default auth((req) => {
   const isLoggedIn = !!req.auth
   const path = req.nextUrl.pathname
 
-  const protectedPrefixes = ["/dashboard", "/quests", "/shadows", "/weapons", "/skills"]
+  const protectedPrefixes = ["/dashboard", "/quests", "/shadows", "/weapons", "/skills", "/guild", "/duels"]
   const isProtected = protectedPrefixes.some((p) => path.startsWith(p))
 
   if (isProtected && !isLoggedIn) {

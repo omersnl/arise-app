@@ -216,7 +216,7 @@ export default async function WeaponsPage() {
               ✦ ARMORY COMPLETE ✦
             </p>
             <p className="text-gray-500 font-mono text-xs">
-              Every weapon forged. The Shadow Monarch's arsenal is unmatched.
+              Every weapon forged. The Shadow Monarch&apos;s arsenal is unmatched.
             </p>
           </div>
         )}

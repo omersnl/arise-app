@@ -1,7 +1,6 @@
 "use client"
 import { useEffect, useState, useCallback } from "react"
-import { QUEST_TEMPLATES, getTemplate } from "@/lib/quests"
-import { Progress } from "@/components/ui/progress"
+import { getTemplate } from "@/lib/quests"
 
 type Quest = {
   id: string
@@ -18,6 +17,7 @@ type Quest = {
 }
 
 type RankUpToast = { rank: string; xp: number } | null
+type StreakMilestone = { days: number; label: string; color: string }
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   E: "#6b7280",
@@ -191,6 +191,7 @@ export default function QuestsPage() {
   const [updating, setUpdating] = useState(false)
   const [rankUpToast, setRankUpToast] = useState<RankUpToast>(null)
   const [xpToast, setXpToast] = useState<{ xp: number; label: string } | null>(null)
+  const [streakToast, setStreakToast] = useState<{ days: number; milestone: StreakMilestone | null } | null>(null)
 
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -232,6 +233,11 @@ export default function QuestsPage() {
     if (data.rankedUp) {
       setRankUpToast({ rank: data.rank, xp: data.totalXP })
       setTimeout(() => setRankUpToast(null), 5000)
+    }
+
+    if (data.streakUpdated) {
+      setStreakToast({ days: data.streakDays, milestone: data.streakMilestone })
+      setTimeout(() => setStreakToast(null), 4000)
     }
 
     setUpdating(false)
@@ -319,6 +325,19 @@ export default function QuestsPage() {
           </div>
         )}
       </div>
+
+      {/* Streak Toast */}
+      {streakToast && (
+        <div className="fixed bottom-6 left-6 system-window rounded-lg px-5 py-3 border-amber-500/50 animate-in fade-in slide-in-from-bottom-2">
+          <p className="text-amber-300 font-mono text-xs uppercase tracking-widest">Streak Extended</p>
+          <p className="text-amber-400 font-mono font-bold text-lg">🔥 {streakToast.days} Day Streak</p>
+          {streakToast.milestone && (
+            <p className="font-mono text-xs mt-0.5" style={{ color: streakToast.milestone.color }}>
+              ✦ {streakToast.milestone.label} unlocked!
+            </p>
+          )}
+        </div>
+      )}
 
       {/* XP Toast */}
       {xpToast && (

@@ -199,7 +199,7 @@ export default async function ShadowsPage() {
               ✦ SHADOW ARMY COMPLETE ✦
             </p>
             <p className="text-gray-500 font-mono text-xs">
-              You stand at the pinnacle. The Shadow Monarch's army is whole.
+              You stand at the pinnacle. The Shadow Monarch&apos;s army is whole.
             </p>
           </div>
         )}

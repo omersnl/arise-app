@@ -4,10 +4,13 @@ import Link from "next/link"
 import { db } from "@/lib/db"
 import { getRankForXP, getXPProgress, RANKS } from "@/types"
 import { getOrCreateDailyQuests, todayString } from "@/lib/quests"
+import { checkStreakBreak, getCurrentMilestone, getNextMilestone } from "@/lib/streak"
 
 export default async function DashboardPage() {
   const session = await auth()
   if (!session?.user?.id) redirect("/login")
+
+  await checkStreakBreak(session.user.id)
 
   const [user, quests] = await Promise.all([
     db.user.findUnique({ where: { id: session.user.id } }),
@@ -22,6 +25,9 @@ export default async function DashboardPage() {
   const completedQuests = quests.filter((q) => q.completed).length
   const earnedXPToday = quests.filter((q) => q.completed).reduce((s, q) => s + q.xpReward, 0)
   const totalXPToday = quests.reduce((s, q) => s + q.xpReward, 0)
+
+  const currentMilestone = getCurrentMilestone(user.streakDays)
+  const nextMilestone = getNextMilestone(user.streakDays)
 
   return (
     <main className="min-h-screen p-6">
@@ -72,18 +78,37 @@ export default async function DashboardPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4">
-          {[
-            { label: "Total XP", value: user.xp.toLocaleString(), color: "#a855f7" },
-            { label: "Streak", value: `${user.streakDays}d`, color: "#f59e0b" },
-            { label: "Daily Kcal", value: user.dailyCalories?.toLocaleString() ?? "—", color: "#10b981" },
-          ].map((stat) => (
-            <div key={stat.label} className="system-window rounded-lg p-4 text-center">
-              <p className="text-gray-500 font-mono text-xs uppercase tracking-wider">{stat.label}</p>
-              <p className="text-2xl font-bold font-mono mt-1" style={{ color: stat.color }}>
-                {stat.value}
+          <div className="system-window rounded-lg p-4 text-center">
+            <p className="text-gray-500 font-mono text-xs uppercase tracking-wider">Total XP</p>
+            <p className="text-2xl font-bold font-mono mt-1" style={{ color: "#a855f7" }}>
+              {user.xp.toLocaleString()}
+            </p>
+          </div>
+
+          {/* Streak card */}
+          <div className="system-window rounded-lg p-4 text-center">
+            <p className="text-gray-500 font-mono text-xs uppercase tracking-wider">Streak</p>
+            <p className="text-2xl font-bold font-mono mt-1" style={{ color: currentMilestone?.color ?? "#f59e0b" }}>
+              {user.streakDays}d
+            </p>
+            {currentMilestone && (
+              <p className="font-mono text-xs mt-0.5" style={{ color: currentMilestone.color }}>
+                {currentMilestone.label}
               </p>
-            </div>
-          ))}
+            )}
+            {nextMilestone && user.streakDays > 0 && (
+              <p className="text-gray-700 font-mono text-xs mt-0.5">
+                {nextMilestone.days - user.streakDays}d to {nextMilestone.label}
+              </p>
+            )}
+          </div>
+
+          <div className="system-window rounded-lg p-4 text-center">
+            <p className="text-gray-500 font-mono text-xs uppercase tracking-wider">Daily Kcal</p>
+            <p className="text-2xl font-bold font-mono mt-1" style={{ color: "#10b981" }}>
+              {user.dailyCalories?.toLocaleString() ?? "—"}
+            </p>
+          </div>
         </div>
 
         {/* Daily Quest Summary */}

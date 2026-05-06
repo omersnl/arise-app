@@ -18,7 +18,7 @@ export default function Home() {
 
         <div className="border border-purple-900/50 rounded p-4 bg-purple-950/20">
           <p className="text-gray-300 text-sm font-mono leading-relaxed">
-            "I alone level up."
+            &quot;I alone level up.&quot;
           </p>
           <p className="text-gray-500 text-xs mt-2 font-mono">— Sung Jin-Woo</p>
         </div>
