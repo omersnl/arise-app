@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 import { calculateDailyCalories } from "@/lib/utils"
 
+type Unit = "metric" | "imperial"
+
 type FormData = {
   name: string
   email: string
@@ -15,16 +17,36 @@ type FormData = {
   confirmPassword: string
   gender: "male" | "female" | ""
   age: string
-  height: string
-  weight: string
+  // metric
+  heightCm: string
+  weightKg: string
+  // imperial
+  heightFt: string
+  heightIn: string
+  weightLbs: string
   goalType: "lose" | "maintain" | "gain" | ""
 }
 
 const STEPS = ["Hunter Registration", "Physical Assessment", "Training Protocol"]
 
+function toMetric(formData: FormData, unit: Unit) {
+  if (unit === "metric") {
+    return {
+      height: parseFloat(formData.heightCm),
+      weight: parseFloat(formData.weightKg),
+    }
+  }
+  const totalInches = parseInt(formData.heightFt || "0") * 12 + parseInt(formData.heightIn || "0")
+  return {
+    height: Math.round(totalInches * 2.54),
+    weight: Math.round(parseFloat(formData.weightLbs) * 0.453592 * 10) / 10,
+  }
+}
+
 export default function RegisterPage() {
   const router = useRouter()
   const [step, setStep] = useState(0)
+  const [unit, setUnit] = useState<Unit>("metric")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [done, setDone] = useState(false)
@@ -35,8 +57,11 @@ export default function RegisterPage() {
     confirmPassword: "",
     gender: "",
     age: "",
-    height: "",
-    weight: "",
+    heightCm: "",
+    weightKg: "",
+    heightFt: "",
+    heightIn: "",
+    weightLbs: "",
     goalType: "",
   })
 
@@ -60,16 +85,22 @@ export default function RegisterPage() {
       }
     }
     if (step === 1) {
-      if (!formData.gender || !formData.age || !formData.height || !formData.weight) {
+      if (!formData.gender || !formData.age) {
+        setError("All fields are required.")
+        return false
+      }
+      if (unit === "metric" && (!formData.heightCm || !formData.weightKg)) {
+        setError("All fields are required.")
+        return false
+      }
+      if (unit === "imperial" && (!formData.heightFt || !formData.weightLbs)) {
         setError("All fields are required.")
         return false
       }
     }
-    if (step === 2) {
-      if (!formData.goalType) {
-        setError("Select a training protocol.")
-        return false
-      }
+    if (step === 2 && !formData.goalType) {
+      setError("Select a training protocol.")
+      return false
     }
     return true
   }
@@ -82,6 +113,7 @@ export default function RegisterPage() {
     }
 
     setLoading(true)
+    const { height, weight } = toMetric(formData, unit)
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
@@ -92,8 +124,8 @@ export default function RegisterPage() {
           password: formData.password,
           gender: formData.gender,
           age: parseInt(formData.age),
-          height: parseFloat(formData.height),
-          weight: parseFloat(formData.weight),
+          height,
+          weight,
           goalType: formData.goalType,
         }),
       })
@@ -110,16 +142,18 @@ export default function RegisterPage() {
     }
   }
 
-  const dailyCalories =
-    done && formData.gender && formData.age && formData.height && formData.weight && formData.goalType
-      ? calculateDailyCalories(
-          parseFloat(formData.weight),
-          parseFloat(formData.height),
-          parseInt(formData.age),
-          formData.gender as "male" | "female",
-          formData.goalType as "lose" | "maintain" | "gain"
-        )
-      : null
+  const dailyCalories = (() => {
+    if (!done || !formData.gender || !formData.age || !formData.goalType) return null
+    const { height, weight } = toMetric(formData, unit)
+    if (!height || !weight) return null
+    return calculateDailyCalories(
+      weight,
+      height,
+      parseInt(formData.age),
+      formData.gender as "male" | "female",
+      formData.goalType as "lose" | "maintain" | "gain"
+    )
+  })()
 
   if (done) {
     return (
@@ -226,6 +260,24 @@ export default function RegisterPage() {
             </p>
           </div>
 
+          {/* Unit toggle */}
+          <div className="flex rounded border border-purple-900/40 overflow-hidden">
+            {(["metric", "imperial"] as const).map((u) => (
+              <button
+                key={u}
+                type="button"
+                onClick={() => setUnit(u)}
+                className={`flex-1 py-2 font-mono text-xs transition-colors capitalize ${
+                  unit === u
+                    ? "bg-purple-800/50 text-purple-200"
+                    : "text-gray-500 hover:text-gray-300"
+                }`}
+              >
+                {u === "metric" ? "Metric (cm / kg)" : "Imperial (ft / lbs)"}
+              </button>
+            ))}
+          </div>
+
           <div className="space-y-1.5">
             <Label>Gender</Label>
             <div className="grid grid-cols-2 gap-2">
@@ -246,40 +298,93 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="age">Age</Label>
-              <Input
-                id="age"
-                type="number"
-                placeholder="25"
-                min="13"
-                max="100"
-                value={formData.age}
-                onChange={(e) => update("age", e.target.value)}
-              />
+          {unit === "metric" ? (
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="age">Age</Label>
+                <Input
+                  id="age"
+                  type="number"
+                  placeholder="25"
+                  min="13"
+                  max="100"
+                  value={formData.age}
+                  onChange={(e) => update("age", e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="heightCm">Height (cm)</Label>
+                <Input
+                  id="heightCm"
+                  type="number"
+                  placeholder="175"
+                  value={formData.heightCm}
+                  onChange={(e) => update("heightCm", e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="weightKg">Weight (kg)</Label>
+                <Input
+                  id="weightKg"
+                  type="number"
+                  placeholder="70"
+                  value={formData.weightKg}
+                  onChange={(e) => update("weightKg", e.target.value)}
+                />
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="height">Height (cm)</Label>
-              <Input
-                id="height"
-                type="number"
-                placeholder="175"
-                value={formData.height}
-                onChange={(e) => update("height", e.target.value)}
-              />
+          ) : (
+            <div className="space-y-3">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="age">Age</Label>
+                  <Input
+                    id="age"
+                    type="number"
+                    placeholder="25"
+                    min="13"
+                    max="100"
+                    value={formData.age}
+                    onChange={(e) => update("age", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="heightFt">Feet</Label>
+                  <Input
+                    id="heightFt"
+                    type="number"
+                    placeholder="5"
+                    min="1"
+                    max="8"
+                    value={formData.heightFt}
+                    onChange={(e) => update("heightFt", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="heightIn">Inches</Label>
+                  <Input
+                    id="heightIn"
+                    type="number"
+                    placeholder="10"
+                    min="0"
+                    max="11"
+                    value={formData.heightIn}
+                    onChange={(e) => update("heightIn", e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="weightLbs">Weight (lbs)</Label>
+                <Input
+                  id="weightLbs"
+                  type="number"
+                  placeholder="155"
+                  value={formData.weightLbs}
+                  onChange={(e) => update("weightLbs", e.target.value)}
+                />
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="weight">Weight (kg)</Label>
-              <Input
-                id="weight"
-                type="number"
-                placeholder="70"
-                value={formData.weight}
-                onChange={(e) => update("weight", e.target.value)}
-              />
-            </div>
-          </div>
+          )}
         </div>
       )}
 
@@ -295,24 +400,9 @@ export default function RegisterPage() {
           <div className="space-y-2">
             {(
               [
-                {
-                  value: "lose",
-                  label: "[ WEIGHT LOSS ]",
-                  desc: "Intense dungeon training. −500 kcal daily deficit.",
-                  icon: "🔥",
-                },
-                {
-                  value: "maintain",
-                  label: "[ MAINTAIN ]",
-                  desc: "Peak performance. Balanced energy intake.",
-                  icon: "⚔️",
-                },
-                {
-                  value: "gain",
-                  label: "[ MUSCLE GAIN ]",
-                  desc: "Build mass and power. +300 kcal daily surplus.",
-                  icon: "💪",
-                },
+                { value: "lose", label: "[ WEIGHT LOSS ]", desc: "Intense dungeon training. −500 kcal daily deficit.", icon: "🔥" },
+                { value: "maintain", label: "[ MAINTAIN ]", desc: "Peak performance. Balanced energy intake.", icon: "⚔️" },
+                { value: "gain", label: "[ MUSCLE GAIN ]", desc: "Build mass and power. +300 kcal daily surplus.", icon: "💪" },
               ] as const
             ).map((goal) => (
               <button
@@ -354,10 +444,7 @@ export default function RegisterPage() {
             ← Back
           </button>
         ) : (
-          <Link
-            href="/login"
-            className="text-gray-500 hover:text-gray-300 font-mono text-xs transition-colors"
-          >
+          <Link href="/login" className="text-gray-500 hover:text-gray-300 font-mono text-xs transition-colors">
             ← Login
           </Link>
         )}
