@@ -61,12 +61,13 @@ export async function PATCH(
   }
 
   const userId = session.user.id
-  const [streakResult] = await Promise.all([
-    justCompleted ? tryUpdateStreak(userId) : Promise.resolve(null),
-    justCompleted ? applyRaidDamage(userId) : Promise.resolve(null),
-  ])
-
+  let streakResult = null
   if (justCompleted) {
+    const [s] = await Promise.allSettled([
+      tryUpdateStreak(userId),
+      applyRaidDamage(userId),
+    ])
+    if (s.status === "fulfilled") streakResult = s.value
     revalidatePath("/guild")
   }
 

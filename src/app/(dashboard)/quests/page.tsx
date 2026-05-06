@@ -220,9 +220,11 @@ export default function QuestsPage() {
     })
     const data = await res.json()
 
-    setQuests((prev) =>
-      prev.map((q) => (q.id === id ? data.quest : q))
-    )
+    if (data.quest) {
+      setQuests((prev) =>
+        prev.map((q) => (q.id === id ? data.quest : q))
+      )
+    }
 
     if (data.xpAwarded > 0) {
       const quest = quests.find((q) => q.id === id)
